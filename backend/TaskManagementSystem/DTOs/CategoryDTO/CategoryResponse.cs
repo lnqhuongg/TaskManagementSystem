@@ -1,8 +1,9 @@
 ﻿using TaskManagementSystem.Enums;
+using TaskManagementSystem.Models.Entity;
 
-namespace TaskManagementSystem.Models.Entity
+namespace TaskManagementSystem.DTOs.CategoryDTO
 {
-    public class Category
+    public class CategoryResponse
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -10,6 +11,5 @@ namespace TaskManagementSystem.Models.Entity
         public CommonStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
     }
 }

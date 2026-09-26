@@ -1,6 +1,6 @@
 ﻿namespace TaskManagementSystem.Services.Impl
 {
-    public class CategoryImpl
+    public class UserServiceImpl : IUserService
     {
     }
 }
