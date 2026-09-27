@@ -1,6 +1,6 @@
 ﻿namespace TaskManagementSystem.Services
 {
-    public interface ICategory
+    public interface IUserService
     {
     }
 }

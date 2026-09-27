@@ -1,6 +1,6 @@
 ﻿namespace TaskManagementSystem.Services.Impl
 {
-    public class TaskImpl
+    public class TaskItemServiceImpl : ITaskItemService
     {
     }
 }
