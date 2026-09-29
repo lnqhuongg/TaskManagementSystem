@@ -1,8 +1,8 @@
-﻿using TaskManagementSystem.Enums;
+using TaskManagementSystem.Enums;
 
 namespace TaskManagementSystem.DTOs.TaskDTO
 {
-    public class CreateTaskRequest
+    public class UpdateTaskRequest
     {
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
