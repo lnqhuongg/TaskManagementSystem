@@ -76,7 +76,7 @@ namespace TaskManagementSystem.Services.Impl
                 Username = request.Username,
                 Email = request.Email,
                 Role = request.Role,
-                Status = CommonStatus.Active,
+                Status = CommonStatus.Active, 
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
