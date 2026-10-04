@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TaskManagementSystem.Commons;
 using TaskManagementSystem.Commons.Exceptions;
 using TaskManagementSystem.DTOs.UserDTO;
@@ -75,6 +75,7 @@ namespace TaskManagementSystem.Services.Impl
             {
                 Username = request.Username,
                 Email = request.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 Role = request.Role,
                 Status = CommonStatus.Active, 
                 CreatedAt = DateTime.UtcNow,

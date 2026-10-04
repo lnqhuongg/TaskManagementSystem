@@ -22,12 +22,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
 builder.Services.AddApplicationServices();
 
 /*
- * Regis all Controllers 
- */
-builder.Services.AddControllers();
-
-/*
- * JsonStringEnumConverter 
+ * Regis all Controllers & JsonStringEnumConverter 
  */
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
