@@ -18,23 +18,64 @@ namespace TaskManagementSystem.Models
             base.OnModelCreating(modelBuilder);
 
             /* 
-             * Enum → String
+             * USER
              */
             modelBuilder.Entity<User>()
-                .Property(u => u.Role)
-                .HasConversion<string>();
+                .Property(x => x.Username)
+                .HasMaxLength(50)
+                .IsRequired();
 
             modelBuilder.Entity<User>()
-                .Property(u => u.Status)
-                .HasConversion<string>();
+                .Property(x => x.Email)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(x => x.Role)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(x => x.Status)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            /* 
+             * CATEGORY
+             */
+            modelBuilder.Entity<Category>()
+                .Property(x => x.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            modelBuilder.Entity<Category>()
+                .Property(x => x.Status)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+
+            /* 
+             * TASK ITEM
+             */
+            modelBuilder.Entity<TaskItem>()
+                .Property(x => x.Title)
+                .HasMaxLength(150)
+                .IsRequired();
 
             modelBuilder.Entity<TaskItem>()
-                .Property(t => t.Status)
-                .HasConversion<string>();
+                .Property(x => x.Status)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
 
             modelBuilder.Entity<TaskItem>()
-                .Property(t => t.Priority)
-                .HasConversion<string>();
+                .Property(x => x.Priority)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
 
             /* 
              * RELATIONSHIP BETWEEN TABLES 
