@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagementSystem.DTOs.CategoryDTO;
 using TaskManagementSystem.Services;
 
 namespace TaskManagementSystem.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("categories")]
     public class CategoryController : ControllerBase
@@ -36,6 +38,7 @@ namespace TaskManagementSystem.Controllers
         /*
          * Get a Category by ID
          */
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -47,6 +50,7 @@ namespace TaskManagementSystem.Controllers
         /*
          * Create a new Category
          */
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create(
             [FromBody] CreateCategoryRequest request)
@@ -54,18 +58,18 @@ namespace TaskManagementSystem.Controllers
             Console.WriteLine(">>> CREATE CATEGORY WAS CALLED");
             var category = await categoryService.Create(request);
 
-            
 
-            //return CreatedAtAction(
-            //    nameof(GetById),
-            //    new { id = category.Id },
-            //    category);
-            return Ok(category);
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = category.Id },
+                category);
         }
 
         /*
          * Update an existing Category by ID
          */
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(
             int id,
