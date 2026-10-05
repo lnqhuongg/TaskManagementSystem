@@ -16,7 +16,7 @@ namespace TaskManagementSystem.Commons
             {
                 NotFoundException => StatusCodes.Status404NotFound,
                 ConflictException => StatusCodes.Status409Conflict,
-                BadRequestException => StatusCodes.Status400BadRequest, 
+                BadRequestException => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status500InternalServerError
             };
 
