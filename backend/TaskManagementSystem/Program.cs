@@ -55,11 +55,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Middileware Pipeline
 app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
