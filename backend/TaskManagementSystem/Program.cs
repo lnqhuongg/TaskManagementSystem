@@ -50,14 +50,21 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// Middileware Pipeline
+// Middileware HTTPS Redirection
 app.UseHttpsRedirection();
 
+// Middileware Global Exception Handler
 app.UseExceptionHandler();
+
+// Middileware Authetication
+
 
 //app.UseHttpsRedirection();
 
+// Middileware Authorization
 app.UseAuthorization();
+
+
 
 app.MapControllers();
 
