@@ -22,12 +22,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
 builder.Services.AddApplicationServices();
 
 /*
- * Regis all Controllers 
- */
-builder.Services.AddControllers();
-
-/*
- * JsonStringEnumConverter 
+ * Regis all Controllers & JsonStringEnumConverter 
  */
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -55,11 +50,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Middileware Pipeline
 app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

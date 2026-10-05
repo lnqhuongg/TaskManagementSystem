@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TaskManagementSystem.DTOs.UserDTO;
 using TaskManagementSystem.Services;
 
@@ -20,12 +20,12 @@ namespace TaskManagementSystem.Controllers
             int pageSize = 5,
             string keyword = "")
         {
-            var categories = await userService.GetAll(
+            var users = await userService.GetAll(
                 page,
                 pageSize,
                 keyword);
 
-            return Ok(categories);
+            return Ok(users);
         }
 
         [HttpGet("{id}")]
