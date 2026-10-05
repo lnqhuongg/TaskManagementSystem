@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TaskManagementSystem.Commons;
 using TaskManagementSystem.Commons.Exceptions;
 using TaskManagementSystem.DTOs.TaskDTO;
@@ -82,7 +82,7 @@ namespace TaskManagementSystem.Services.Impl
                 Description = request.Description,
                 Status = request.Status,
                 Priority = request.Priority,
-                DueDate = request.DueDate,
+                DueDate = ToUtc(request.DueDate),
                 UserId = request.UserId,
                 CategoryId = request.CategoryId,
                 CreatedAt = DateTime.UtcNow,
@@ -99,7 +99,8 @@ namespace TaskManagementSystem.Services.Impl
             }
             catch (Exception ex)
             {
-                throw new BadRequestException($"Error creating task: {ex.Message}");
+                var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                throw new BadRequestException($"Error creating task: {errorMsg}");
             }
         }
 
@@ -136,7 +137,7 @@ namespace TaskManagementSystem.Services.Impl
             task.Description = request.Description;
             task.Status = request.Status;
             task.Priority = request.Priority;
-            task.DueDate = request.DueDate;
+            task.DueDate = ToUtc(request.DueDate);
             task.UpdatedAt = DateTime.UtcNow;
 
             try
@@ -153,8 +154,20 @@ namespace TaskManagementSystem.Services.Impl
             }
             catch (Exception ex)
             {
-                throw new BadRequestException($"Error updating task: {ex.Message}");
+                var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                throw new BadRequestException($"Error updating task: {errorMsg}");
             }
+        }
+
+        private static DateTime? ToUtc(DateTime? dateTime)
+        {
+            if (!dateTime.HasValue) return null;
+            return dateTime.Value.Kind switch
+            {
+                DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime.Value, DateTimeKind.Utc),
+                DateTimeKind.Local => dateTime.Value.ToUniversalTime(),
+                _ => dateTime.Value
+            };
         }
 
         private TaskResponse ToResponse(TaskItem task)
