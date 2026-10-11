@@ -21,6 +21,9 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
  */
 builder.Services.AddApplicationServices();
 
+builder.Services.AddJwtAuthentication(builder.Configuration);
+
+
 /*
  * Regis all Controllers & JsonStringEnumConverter 
  */
@@ -57,7 +60,7 @@ app.UseHttpsRedirection();
 app.UseExceptionHandler();
 
 // Middileware Authetication
-
+app.UseAuthentication();
 
 //app.UseHttpsRedirection();
 

@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 using TaskManagementSystem.DTOs.UserDTO;
+using TaskManagementSystem.Models.Entity;
 using TaskManagementSystem.Services;
 
 namespace TaskManagementSystem.Controllers
@@ -14,6 +17,7 @@ namespace TaskManagementSystem.Controllers
             this.userService = userService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll(
             int page = 1,
@@ -27,7 +31,7 @@ namespace TaskManagementSystem.Controllers
 
             return Ok(users);
         }
-
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -36,6 +40,7 @@ namespace TaskManagementSystem.Controllers
             return Ok(user);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create(
             [FromBody] CreateUserRequest request)
@@ -43,9 +48,14 @@ namespace TaskManagementSystem.Controllers
             Console.WriteLine(">>> CREATE USER WAS CALLED");
             var user = await userService.Create(request);
 
-            return Ok(user);
+            //return Ok(user);
+            return CreatedAtAction(
+               nameof(GetById),
+               new { id = user.Id },
+               user);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(
             int id,

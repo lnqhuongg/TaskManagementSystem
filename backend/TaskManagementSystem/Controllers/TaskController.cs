@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskManagementSystem.DTOs.TaskDTO;
+using TaskManagementSystem.Models.Entity;
 using TaskManagementSystem.Services;
 
 namespace TaskManagementSystem.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("tasks")]
     public class TaskController : ControllerBase
@@ -33,7 +36,10 @@ namespace TaskManagementSystem.Controllers
         public async Task<IActionResult> Create([FromBody] CreateTaskRequest request)
         {
             var task = await taskService.Create(request);
-            return Ok(task);
+            return CreatedAtAction(
+               nameof(GetById),
+               new { id = task.Id },
+               task);
         }
 
         [HttpPut("{id}")]
