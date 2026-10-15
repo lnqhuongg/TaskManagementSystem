@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TaskManagementSystem.Commons;
 using TaskManagementSystem.Infrastructure.DI;
 using TaskManagementSystem.Models;
@@ -65,18 +65,23 @@ if (app.Environment.IsDevelopment())
 }
 
 // Middileware HTTPS Redirection
+// Tự động chuyển các HTTP request sang HTTPS để tăng tính bảo mật khi truyền dữ liệu.
 app.UseHttpsRedirection();
 
 // Middleware CORS
+// Cho phép frontend tại http://localhost:5173 gửi request đến backend, đồng thời quy định các HTTP method và header được phép sử dụng.
 app.UseCors("Frontend");
 
 // Middileware Global Exception Handler
+// Xử lý các exception phát sinh trong quá trình xử lý request, chuyển chúng đến GlobalExceptionHandler để trả về response lỗi thống nhất.
 app.UseExceptionHandler();
 
 // Middileware Authetication
+// Xác thực danh tính người dùng dựa trên thông tin xác thực, chẳng hạn JWT token được gửi trong request.
 app.UseAuthentication();
 
 // Middileware Authorization
+// Kiểm tra quyền truy cập của người dùng đối với endpoint dựa trên các chính sách hoặc thuộc tính như [Authorize] và [Authorize(Roles = "Admin")].
 app.UseAuthorization();
 
 app.MapControllers();
