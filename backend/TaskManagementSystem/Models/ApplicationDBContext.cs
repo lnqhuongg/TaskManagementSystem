@@ -26,6 +26,10 @@ namespace TaskManagementSystem.Models
                 .IsRequired();
 
             modelBuilder.Entity<User>()
+                .Property(x => x.Password)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
                 .Property(x => x.Email)
                 .HasMaxLength(100)
                 .IsRequired();

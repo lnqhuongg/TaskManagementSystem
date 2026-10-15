@@ -35,6 +35,14 @@ namespace TaskManagementSystem.Controllers
             return Ok(categories);
         }
 
+        [HttpGet]
+        [Route("active")]
+        public async Task<IActionResult> GetAllActiveCategories()
+        {
+            var categories = await categoryService.GetAllActiveCategories();
+            return Ok(categories);
+        }
+
         /*
          * Get a Category by ID
          */

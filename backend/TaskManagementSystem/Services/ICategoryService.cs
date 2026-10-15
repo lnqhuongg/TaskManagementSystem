@@ -9,5 +9,6 @@ namespace TaskManagementSystem.Services
         Task<CategoryResponse> GetById(int category_id);
         Task<CategoryResponse> Create(CreateCategoryRequest request);
         Task<CategoryResponse> Update(int id, UpdateCategoryRequest request);
+        Task<List<CategoryResponse>> GetAllActiveCategories();
     }
 }

@@ -16,7 +16,7 @@ namespace TaskManagementSystem.DTOs.TaskDTO
         public TaskItemStatus Status { get; set; } = TaskItemStatus.Todo;
 
         [EnumDataType(typeof(TaskItemPriority), ErrorMessage = "Invalid task priority")]
-        public TaskItemPriority Priority { get; set; } = TaskItemPriority.Medium;
+        public TaskItemPriority Priority { get; set; }
 
         public DateTime? DueDate { get; set; }
 

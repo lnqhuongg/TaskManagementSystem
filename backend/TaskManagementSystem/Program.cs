@@ -34,13 +34,24 @@ builder.Services.AddControllers()
             new System.Text.Json.Serialization.JsonStringEnumConverter()
         );
     });
-
+    
 
 /*
  * Regis Global Exception Handler 
  */
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+/*
+ * Regis and config CORS
+ */
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -56,18 +67,17 @@ if (app.Environment.IsDevelopment())
 // Middileware HTTPS Redirection
 app.UseHttpsRedirection();
 
+// Middleware CORS
+app.UseCors("Frontend");
+
 // Middileware Global Exception Handler
 app.UseExceptionHandler();
 
 // Middileware Authetication
 app.UseAuthentication();
 
-//app.UseHttpsRedirection();
-
 // Middileware Authorization
 app.UseAuthorization();
-
-
 
 app.MapControllers();
 

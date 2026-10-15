@@ -151,6 +151,14 @@ namespace TaskManagementSystem.Services.Impl
             return query;
         }
 
+        public async Task<List<CategoryResponse>> GetAllActiveCategories()
+        {
+            var activeCategories = await Context.Categories
+                .Where(c => c.Status == CommonStatus.Active)
+                .ToListAsync();
+            return activeCategories.Select(ToResponse).ToList();
+        }
+
         private CategoryResponse ToResponse (Category category)
         {
             return new CategoryResponse

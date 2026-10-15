@@ -27,18 +27,19 @@ namespace TaskManagementSystem.Services.Impl
             // 1. Tìm user theo Email
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            // 2. Kiểm tra nếu user không tồn tại hoặc tài khoản bị khóa
-            if (user == null || user.Status == CommonStatus.Inactive)
+            // 2. Kiểm tra tài khoản và mật khẩu
+            if (user == null ||
+            !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
             {
-                // Thông báo chung để tránh để lộ thông tin email có tồn tại hay không
-                throw new BadRequestException("Invalid email or password.");
+                throw new UnauthorizedException(
+                "Email hoặc mật khẩu không chính xác.");
             }
 
-            // 3. Kiểm tra mật khẩu bằng BCrypt
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
-            if (!isPasswordValid)
+            // 3. Kiểm tra trạng thái tài khoản sau khi xác thực thành công
+            if (user.Status == CommonStatus.Inactive)
             {
-                throw new BadRequestException("Invalid email or password.");
+                throw new ForbiddenException(
+                "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
             }
 
             // 4. Đọc thời gian hết hạn của token từ appsettings (mặc định 60 phút nếu chưa cấu hình)
