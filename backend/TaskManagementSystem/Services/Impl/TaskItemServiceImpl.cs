@@ -20,6 +20,7 @@ namespace TaskManagementSystem.Services.Impl
         public async Task<PagedResult<TaskResponse>> GetAll(int page, int pageSize, string keyword)
         {
             var query = Context.TaskItems
+                .AsNoTracking() 
                 .Include(t => t.User)
                 .Include(t => t.Category)
                 .AsQueryable();
@@ -50,6 +51,7 @@ namespace TaskManagementSystem.Services.Impl
         public async Task<TaskResponse> GetById(int id)
         {
             var task = await Context.TaskItems
+                .AsNoTracking()
                 .Include(t => t.User)
                 .Include(t => t.Category)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -146,6 +148,7 @@ namespace TaskManagementSystem.Services.Impl
 
                 // reload with navigation properties for response
                 var updated = await Context.TaskItems
+                    .AsNoTracking()
                     .Include(t => t.User)
                     .Include(t => t.Category)
                     .FirstOrDefaultAsync(t => t.Id == id);
