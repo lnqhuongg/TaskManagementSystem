@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TaskManagementSystem.Commons;
 using TaskManagementSystem.Commons.Exceptions;
 using TaskManagementSystem.DTOs.CategoryDTO;
@@ -117,7 +117,9 @@ namespace TaskManagementSystem.Services.Impl
          */
         public async Task<CategoryResponse> GetById (int category_id)
         {
-            var category = await Context.Categories.FindAsync(category_id);
+            var category = await Context.Categories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == category_id);
 
             if (category == null)
             {
@@ -135,6 +137,7 @@ namespace TaskManagementSystem.Services.Impl
             // id = 0 -> create
             // truyền id vô để kiểm tra trùng lúc sửa ko bị trùng với chính nó
             return await Context.Categories
+                .AsNoTracking()
                 .AnyAsync(x =>
                     x.Name == categoryName &&
                     (id == 0 || x.Id != id)
@@ -143,7 +146,7 @@ namespace TaskManagementSystem.Services.Impl
 
         private IQueryable<Category> SearchByKeyword(string keyword)
         {
-            IQueryable<Category> query = Context.Categories;
+            IQueryable<Category> query = Context.Categories.AsNoTracking();
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(x => x.Name.Contains(keyword));

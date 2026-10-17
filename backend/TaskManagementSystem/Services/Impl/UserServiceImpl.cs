@@ -49,7 +49,9 @@ namespace TaskManagementSystem.Services.Impl
 
         public async Task<UserResponse> GetById(int user_id)
         {
-            var user = await Context.Users.FindAsync(user_id);
+            var user = await Context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == user_id);
 
             if (user == null) 
             {
@@ -128,6 +130,7 @@ namespace TaskManagementSystem.Services.Impl
         private async Task<bool> IsUsernameExist(string username, int id = 0)
         {
             return await Context.Users
+                .AsNoTracking()
                 .AnyAsync(x =>
                     x.Username == username &&
                     (id == 0 || x.Id != id)
@@ -137,6 +140,7 @@ namespace TaskManagementSystem.Services.Impl
         private async Task<bool> IsEmailExist(string email, int id = 0)
         {
             return await Context.Users
+                .AsNoTracking()
                 .AnyAsync(x =>
                     x.Email == email &&
                     (id == 0 || x.Id != id)
@@ -145,7 +149,7 @@ namespace TaskManagementSystem.Services.Impl
 
         private IQueryable<User> SearchByKeyword(string keyword)
         {
-            IQueryable<User> query = Context.Users;
+            IQueryable<User> query = Context.Users.AsNoTracking();
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(x => x.Username.Contains(keyword) || x.Email.Contains(keyword));
