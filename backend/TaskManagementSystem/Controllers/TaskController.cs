@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TaskManagementSystem.DTOs.TaskDTO;
 using TaskManagementSystem.Services;
 
@@ -15,10 +15,28 @@ namespace TaskManagementSystem.Controllers
             this.taskService = taskService;
         }
 
+        /// <summary>
+        /// Endpoint tối ưu bằng INCLUDE (Eager Loading):
+        /// Chỉ sinh 1 query (hoặc 2 kèm count), nạp toàn bộ User và Category bằng JOIN.
+        /// Xem Header 'X-Query-Count' và 'X-Response-Time-Ms'.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll(int page = 1, int pageSize = 5, string keyword = "")
         {
             var tasks = await taskService.GetAll(page, pageSize, keyword);
+            return Ok(tasks);
+        }
+
+        /// <summary>
+        /// Endpoint DEMO TÁI HIỆN LỖI N+1:
+        /// Không dùng Include, duyệt từng Task và query lặp User + Category.
+        /// Số query = 2 + 2 * pageSize (ví dụ pageSize=5 sinh 12 queries; pageSize=10 sinh 22 queries).
+        /// Xem Header 'X-Query-Count' và 'X-Response-Time-Ms' để so sánh với GET /tasks.
+        /// </summary>
+        [HttpGet("n-plus-one")]
+        public async Task<IActionResult> GetAllNPlusOne(int page = 1, int pageSize = 5, string keyword = "")
+        {
+            var tasks = await taskService.GetAllNPlusOne(page, pageSize, keyword);
             return Ok(tasks);
         }
 
