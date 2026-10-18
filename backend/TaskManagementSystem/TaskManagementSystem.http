@@ -1,6 +1,59 @@
 @TaskManagementSystem_HostAddress = http://localhost:5229
 
-GET {{TaskManagementSystem_HostAddress}}/weatherforecast/
+### 1. Đăng nhập lấy Token
+# @name login
+POST {{TaskManagementSystem_HostAddress}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@123456"
+}
+
+### Lưu biến token từ kết quả đăng nhập (hoặc dán token của bạn vào đây)
+@authToken = {{login.response.body.token}}
+
+
+### ==========================================================
+### 2. DEMO TỐI ƯU TRUY VẤN: N+1 vs INCLUDE
+### ==========================================================
+
+### 2.1. TÁI HIỆN LỖI N+1 (Xem header 'X-Query-Count' trong response)
+# Với pageSize = 10 -> X-Query-Count = 22 queries (1 count + 1 tasks + 10 user + 10 category)
+GET {{TaskManagementSystem_HostAddress}}/tasks/n-plus-one?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
-###
+### 2.2. ĐÃ TỐI ƯU BẰNG INCLUDE (Eager Loading)
+# Cùng pageSize = 10 -> X-Query-Count = 2 queries duy nhất (1 count + 1 task JOIN user, category)
+GET {{TaskManagementSystem_HostAddress}}/tasks?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+
+### ==========================================================
+### 3. DEMO BỘ NHỚ ĐỆM (IMemoryCache)
+### ==========================================================
+
+### 3.1. Lấy danh sách Categories đang kích hoạt
+# Lần 1 (Cache Miss): X-Query-Count = 1 (Query DB và nạp vào MemoryCache)
+# Lần 2 (Cache Hit):  X-Query-Count = 0, X-Cache = HIT (Thời gian < 1ms, không chọc DB)
+GET {{TaskManagementSystem_HostAddress}}/categories/active
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 3.2. Lấy chi tiết 1 Category (Áp dụng Cache theo ID)
+GET {{TaskManagementSystem_HostAddress}}/categories/1
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 3.3. Tạo Category mới -> Kích hoạt XÓA CACHE (Cache Invalidation)
+# Sau khi gọi request này, gọi lại 3.1 sẽ thấy X-Query-Count = 1 (Cache Miss để nạp dữ liệu mới)
+POST {{TaskManagementSystem_HostAddress}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Demo Invalidation Category",
+  "description": "Category dùng để kiểm tra việc xóa cache tự động khi thêm mới"
+}

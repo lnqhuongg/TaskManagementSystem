@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using TaskManagementSystem.Commons;
 using TaskManagementSystem.Commons.Exceptions;
 using TaskManagementSystem.DTOs.CategoryDTO;
 using TaskManagementSystem.Enums;
+using TaskManagementSystem.Infrastructure.Performance;
 using TaskManagementSystem.Models;
 using TaskManagementSystem.Models.Entity;
 
@@ -11,9 +13,16 @@ namespace TaskManagementSystem.Services.Impl
     public class CategoryServiceImpl : ICategoryService
     {
         private readonly ApplicationDBContext Context;
-        public CategoryServiceImpl(ApplicationDBContext context)
+        private readonly IMemoryCache _cache;
+
+        // Cache keys
+        private const string ActiveCategoriesCacheKey = "categories_active";
+        private static string GetCategoryCacheKey(int id) => $"category_{id}";
+
+        public CategoryServiceImpl(ApplicationDBContext context, IMemoryCache cache)
         {
             Context = context;
+            _cache = cache;
         }
 
         /*
@@ -71,6 +80,10 @@ namespace TaskManagementSystem.Services.Impl
             {
                 Context.Categories.Add(categoryEntity);
                 await Context.SaveChangesAsync();
+
+                // XÓA CACHE: Đảm bảo lần gọi GetAllActiveCategories tiếp theo sẽ lấy dữ liệu mới nhất
+                _cache.Remove(ActiveCategoriesCacheKey);
+
                 return ToResponse(categoryEntity);
             }
             catch (Exception ex)
@@ -104,6 +117,11 @@ namespace TaskManagementSystem.Services.Impl
             try
             {
                 await Context.SaveChangesAsync();
+
+                // XÓA CACHE: Xóa cả cache danh sách active và cache chi tiết của id này
+                _cache.Remove(ActiveCategoriesCacheKey);
+                _cache.Remove(GetCategoryCacheKey(id));
+
                 return ToResponse(category);
             }
             catch (Exception ex)
@@ -113,10 +131,20 @@ namespace TaskManagementSystem.Services.Impl
         }
 
         /*
-         * Get By Id
+         * Get By Id (Áp dụng IMemoryCache)
          */
         public async Task<CategoryResponse> GetById (int category_id)
         {
+            var cacheKey = GetCategoryCacheKey(category_id);
+
+            // 1. Kiểm tra cache (Cache Hit: 0 truy vấn DB)
+            if (_cache.TryGetValue(cacheKey, out CategoryResponse? cachedCategory) && cachedCategory != null)
+            {
+                PerformanceTracker.MarkCacheHit();
+                return cachedCategory;
+            }
+
+            // 2. Cache Miss: Truy vấn Database
             var category = await Context.Categories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == category_id);
@@ -125,7 +153,17 @@ namespace TaskManagementSystem.Services.Impl
             {
                 throw new NotFoundException($"Category with id {category_id} not found.");
             }
-            else return ToResponse(category);
+
+            var response = ToResponse(category);
+
+            // 3. Ghi vào MemoryCache (Sliding 5 phút, Absolute 30 phút)
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+
+            _cache.Set(cacheKey, response, cacheOptions);
+
+            return response;
         }
 
         /*
@@ -154,6 +192,40 @@ namespace TaskManagementSystem.Services.Impl
             return query;
         }
 
+<<<<<<< Updated upstream
+=======
+        /*
+         * Get All Active Categories (Áp dụng IMemoryCache)
+         * Danh mục công việc ít biến động, là ứng viên số 1 để cache
+         */
+        public async Task<List<CategoryResponse>> GetAllActiveCategories()
+        {
+            // 1. Kiểm tra cache (Cache Hit: 0 truy vấn DB, phản hồi < 1ms)
+            if (_cache.TryGetValue(ActiveCategoriesCacheKey, out List<CategoryResponse>? cachedCategories) && cachedCategories != null)
+            {
+                PerformanceTracker.MarkCacheHit();
+                return cachedCategories;
+            }
+
+            // 2. Cache Miss: Truy vấn từ Database với AsNoTracking
+            var activeCategories = await Context.Categories
+                .AsNoTracking()
+                .Where(c => c.Status == CommonStatus.Active)
+                .ToListAsync();
+
+            var result = activeCategories.Select(ToResponse).ToList();
+
+            // 3. Ghi vào MemoryCache
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+
+            _cache.Set(ActiveCategoriesCacheKey, result, cacheOptions);
+
+            return result;
+        }
+
+>>>>>>> Stashed changes
         private CategoryResponse ToResponse (Category category)
         {
             return new CategoryResponse
