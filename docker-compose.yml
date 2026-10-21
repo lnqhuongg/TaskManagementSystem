@@ -1,0 +1,49 @@
+﻿services:
+  database:
+    image: postgres:17
+    container_name: task_database
+    restart: always
+    environment:
+      POSTGRES_DB: task_management_system
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d task_management_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend/TaskManagementSystem
+      dockerfile: Dockerfile
+    container_name: task_backend
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__TaskManagementSystemDatabase=Host=database;Port=5432;Database=task_management_system;Username=postgres;Password=postgres;
+    ports:
+      - "5000:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend/task-management-system-fe
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:5000
+    container_name: task_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

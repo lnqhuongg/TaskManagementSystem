@@ -192,8 +192,6 @@ namespace TaskManagementSystem.Services.Impl
             return query;
         }
 
-<<<<<<< Updated upstream
-=======
         /*
          * Get All Active Categories (Áp dụng IMemoryCache)
          * Danh mục công việc ít biến động, là ứng viên số 1 để cache
@@ -225,7 +223,6 @@ namespace TaskManagementSystem.Services.Impl
             return result;
         }
 
->>>>>>> Stashed changes
         private CategoryResponse ToResponse (Category category)
         {
             return new CategoryResponse
