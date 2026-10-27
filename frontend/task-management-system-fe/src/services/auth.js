@@ -1,9 +1,34 @@
 import { api } from './api'
 
-// GET /categories
+async function getErrorMessage(response, fallback) {
+    try {
+        const data = await response.json()
+        if (data.errors) {
+            const fieldNames = {
+                Username: 'Tên đăng nhập',
+                Email: 'Email',
+                Password: 'Mật khẩu',
+                ConfirmPassword: 'Xác nhận mật khẩu',
+                Role: 'Vai trò',
+            }
+            const validationErrors = Object.entries(data.errors)
+                .flatMap(([field, messages]) => {
+                    const label = fieldNames[field] ?? field
+                    return (Array.isArray(messages) ? messages : [messages])
+                        .map((message) => `${label}: ${message}`)
+                })
+
+            if (validationErrors.length) return validationErrors.join(' ')
+        }
+
+        return data.message || data.title || fallback
+    } catch {
+        return fallback
+    }
+}
+
+// POST /auth/login
 export async function login(email, password) {
-
-
     const response = await api('/auth/login', {
         method: 'POST',
         body: JSON.stringify({
@@ -13,32 +38,28 @@ export async function login(email, password) {
     })
 
     if (!response.ok) {
-        const data = await response.json()
-        throw new Error(
-            data.message ||
-            'Đã xảy ra lỗi khi đăng nhập.'
-        )
+        throw new Error(await getErrorMessage(response, 'Đã xảy ra lỗi khi đăng nhập.'))
     }
 
     return await response.json()
 }
 
-async function handleLogin() {
-    try {
-        const data = await login(email, password)
+// POST /auth/register (tái sử dụng Create User logic ở Backend)
+export async function register(username, email, password, confirmPassword) {
+    const response = await api('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+            username,
+            email,
+            password,
+            confirmPassword,
+            role: 'User',
+        }),
+    })
 
-        // Lưu JWT để api.js sử dụng ở những request sau
-        localStorage.setItem('taskflow_access_token', data.token)
-
-        // Có thể lưu thêm thông tin người dùng để hiển thị giao diện
-        localStorage.setItem('taskflow_user', JSON.stringify({
-            username: data.username,
-            email: data.email,
-            role: data.role,
-        }))
-
-        console.log('Đăng nhập thành công!')
-    } catch (error) {
-        console.error(error.message)
+    if (!response.ok) {
+        throw new Error(await getErrorMessage(response, 'Đã xảy ra lỗi khi đăng ký.'))
     }
+
+    return await response.json()
 }
