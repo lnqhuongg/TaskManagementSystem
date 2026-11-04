@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskManagementSystem.Commons.Exceptions;
 using TaskManagementSystem.DTOs.TaskDTO;
-using TaskManagementSystem.Models.Entity;
+using TaskManagementSystem.Enums;
 using TaskManagementSystem.Services;
 
 namespace TaskManagementSystem.Controllers
@@ -26,7 +28,7 @@ namespace TaskManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(int page = 1, int pageSize = 5, string keyword = "")
         {
-            var tasks = await taskService.GetAll(page, pageSize, keyword);
+            var tasks = await taskService.GetAll(page, pageSize, keyword, GetCurrentUserId(), GetCurrentUserRole());
             return Ok(tasks);
         }
 
@@ -39,21 +41,21 @@ namespace TaskManagementSystem.Controllers
         [HttpGet("n-plus-one")]
         public async Task<IActionResult> GetAllNPlusOne(int page = 1, int pageSize = 5, string keyword = "")
         {
-            var tasks = await taskService.GetAllNPlusOne(page, pageSize, keyword);
+            var tasks = await taskService.GetAllNPlusOne(page, pageSize, keyword, GetCurrentUserId(), GetCurrentUserRole());
             return Ok(tasks);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var task = await taskService.GetById(id);
+            var task = await taskService.GetById(id, GetCurrentUserId(), GetCurrentUserRole());
             return Ok(task);
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateTaskRequest request)
         {
-            var task = await taskService.Create(request);
+            var task = await taskService.Create(request, GetCurrentUserId(), GetCurrentUserRole());
             return CreatedAtAction(
                nameof(GetById),
                new { id = task.Id },
@@ -63,8 +65,23 @@ namespace TaskManagementSystem.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateTaskRequest request)
         {
-            var task = await taskService.Update(id, request);
+            var task = await taskService.Update(id, request, GetCurrentUserId(), GetCurrentUserRole());
             return Ok(task);
+        }
+
+        private int GetCurrentUserId()
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(idClaim, out var userId))
+            {
+                return userId;
+            }
+            throw new UnauthorizedException("User ID claim not found in token.");
+        }
+
+        private UserRole GetCurrentUserRole()
+        {
+            return User.IsInRole(UserRole.Admin.ToString()) ? UserRole.Admin : UserRole.User;
         }
     }
 }

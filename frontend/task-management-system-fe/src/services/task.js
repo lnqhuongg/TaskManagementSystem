@@ -9,7 +9,7 @@ async function getErrorMessage(response, fallback) {
     }
 }
 
-// GET /categories
+// GET /tasks
 export async function getAll(page = 1, pageSize = 5, keyword = '') {
     const params = new URLSearchParams({
         page,
@@ -28,17 +28,21 @@ export async function getAll(page = 1, pageSize = 5, keyword = '') {
 
 // POST /tasks
 export async function create(title, description, status, priority, dueDate, userId, categoryId) {
+    const payload = {
+        title,
+        description,
+        status,
+        priority,
+        dueDate,
+        categoryId,
+    }
+    if (userId != null) {
+        payload.userId = Number(userId)
+    }
+
     const response = await api('/tasks', {
         method: 'POST',
-        body: JSON.stringify({
-            title,
-            description,
-            status,
-            priority,
-            dueDate,
-            userId,
-            categoryId,
-        }),
+        body: JSON.stringify(payload),
     })
 
     if (!response.ok) throw new Error(await getErrorMessage(response, 'Đã xảy ra lỗi khi thêm công việc.'))
@@ -48,17 +52,21 @@ export async function create(title, description, status, priority, dueDate, user
 
 // PUT /tasks/{id}
 export async function update(title, description, status, priority, dueDate, userId, categoryId, id) {
+    const payload = {
+        title,
+        description,
+        status,
+        priority,
+        dueDate,
+        categoryId,
+    }
+    if (userId != null) {
+        payload.userId = Number(userId)
+    }
+
     const response = await api(`/tasks/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({
-            title,
-            description,
-            status,
-            priority,
-            dueDate,
-            userId,
-            categoryId,
-        }),
+        body: JSON.stringify(payload),
     })
 
     if (!response.ok) throw new Error(await getErrorMessage(response, 'Đã xảy ra lỗi khi chỉnh sửa công việc.'))
@@ -66,7 +74,7 @@ export async function update(title, description, status, priority, dueDate, user
     return await response.json()
 }
 
-// GET /categories/{id}
+// GET /tasks/{id}
 export async function getById(id) {
     const response = await api(`/tasks/${id}`)
 
