@@ -54,6 +54,19 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+//thêm để app.UseCors("Frontend"); ko bị lỗi
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Cổng của Frontend
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -66,8 +79,6 @@ if (app.Environment.IsDevelopment())
 // Tự động chuyển các HTTP request sang HTTPS để tăng tính bảo mật khi truyền dữ liệu.
 app.UseHttpsRedirection();
 
-<<<<<<< Updated upstream
-=======
 // Middleware CORS
 // Cho phép frontend tại http://localhost:5173 gửi request đến backend, đồng thời quy định các HTTP method và header được phép sử dụng.
 app.UseCors("Frontend");
@@ -75,7 +86,6 @@ app.UseCors("Frontend");
 // Middleware đo lường hiệu năng: Ghi nhận số truy vấn DB và thời gian phản hồi qua response header + console log
 app.UseMiddleware<PerformanceMiddleware>();
 
->>>>>>> Stashed changes
 // Middileware Global Exception Handler
 // Xử lý các exception phát sinh trong quá trình xử lý request, chuyển chúng đến GlobalExceptionHandler để trả về response lỗi thống nhất.
 app.UseExceptionHandler();
@@ -97,6 +107,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+    dbContext.Database.Migrate();
     var admin = dbContext.Users.FirstOrDefault(u => u.Email == "admin@example.com");
     if (admin == null)
     {

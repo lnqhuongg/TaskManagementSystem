@@ -84,8 +84,8 @@ function App() {
   return <>
     <Routes>
       <Route path="/" element={<Navigate to={authUser ? roleHome(authUser) : '/signin'} replace />} />
-      <Route path="/signin" element={authUser ? <Navigate to={roleHome(authUser)} replace /> : <AuthPage mode="signin" onLogin={handleLogin} />} />
-      <Route path="/register" element={authUser ? <Navigate to={roleHome(authUser)} replace /> : <AuthPage mode="register" onLogin={handleLogin} />} />
+      <Route path="/signin" element={authUser ? <Navigate to={roleHome(authUser)} replace /> : <AuthPage mode="signin" onLogin={handleLogin} onNotice={showNotice} />} />
+      <Route path="/register" element={authUser ? <Navigate to={roleHome(authUser)} replace /> : <AuthPage mode="register" onLogin={handleLogin} onNotice={showNotice} />} />
       <Route path="/user" element={<ProtectedWorkspace authUser={authUser} requiredRole="User"><WorkspaceLayout role="user" account={authUser} onLogout={handleLogout} /></ProtectedWorkspace>}>
         <Route index element={<Navigate to="tasks" replace />} />
         <Route path="tasks" element={<TasksPage role="user" userId={authUser?.id} username={authUser?.username} tasks={tasks} onChange={setTasks} onNotice={showNotice} />} />
