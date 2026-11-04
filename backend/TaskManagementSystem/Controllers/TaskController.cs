@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using TaskManagementSystem.Commons;
 using TaskManagementSystem.DTOs.TaskDTO;
 using TaskManagementSystem.Models.Entity;
 using TaskManagementSystem.Services;
@@ -55,35 +53,6 @@ namespace TaskManagementSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateTaskRequest request)
         {
-            // Trích xuất UserId chính chủ từ Token JWT đã xác thực (hỗ trợ cả NameIdentifier, nameid, sub)
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                           ?? User.FindFirst("nameid")?.Value
-                           ?? User.FindFirst("sub")?.Value; 
-
-            if (!int.TryParse(userIdClaim, out int currentUserId))
-            {
-                return Unauthorized(new ApiResponse<object>
-                {
-                    Success = false,
-                    Message = "Không xác định được danh tính người dùng từ Token.",
-                    DataDTO = null
-                });
-            }
-
-            // Kiểm soát phân quyền: Người dùng chỉ được tạo công việc cho chính mình
-            if (request.UserId != 0 && request.UserId != currentUserId)
-            {
-                return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse<object>
-                {
-                    Success = false,
-                    Message = "Bạn không có quyền tạo công việc cho người dùng khác.",
-                    DataDTO = null
-                });
-            }
-
-            // Luôn đảm bảo UserId là của người đang đăng nhập
-            request.UserId = currentUserId;
-
             var task = await taskService.Create(request);
             return CreatedAtAction(
                nameof(GetById),
