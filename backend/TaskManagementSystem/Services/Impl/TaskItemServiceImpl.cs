@@ -23,7 +23,7 @@ namespace TaskManagementSystem.Services.Impl
         /// Toàn bộ dữ liệu Task, User, Category được nạp trong 1 query duy nhất!
         /// </summary>
         public async Task<PagedResult<TaskResponse>> GetAll(int page, int pageSize, string keyword)
-        {
+        {   
             var query = Context.TaskItems
                 .AsNoTracking() 
                 .Include(t => t.User)
