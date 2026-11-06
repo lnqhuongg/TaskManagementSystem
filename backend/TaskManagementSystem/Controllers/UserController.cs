@@ -56,6 +56,34 @@ namespace TaskManagementSystem.Controllers
         }
 
         [Authorize]
+        [HttpPut("me")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+            {
+                return Unauthorized();
+            }
+
+            var updatedUser = await userService.UpdateProfile(currentUserId, request);
+            return Ok(updatedUser);
+        }
+
+        [Authorize]
+        [HttpPut("me/change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+            {
+                return Unauthorized();
+            }
+
+            await userService.ChangePassword(currentUserId, request);
+            return Ok(new { message = "Đổi mật khẩu thành công." });
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(
             int id,

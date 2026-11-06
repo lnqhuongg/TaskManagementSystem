@@ -1,4 +1,4 @@
-﻿using TaskManagementSystem.Commons;
+using TaskManagementSystem.Commons;
 using TaskManagementSystem.DTOs.UserDTO;
 
 namespace TaskManagementSystem.Services
@@ -9,5 +9,7 @@ namespace TaskManagementSystem.Services
         Task<UserResponse> GetById(int user_id);
         Task<UserResponse> Create(CreateUserRequest request);
         Task<UserResponse> Update(int id, UpdateUserRequest request);
+        Task<UserResponse> UpdateProfile(int id, UpdateProfileRequest request);
+        Task ChangePassword(int id, ChangePasswordRequest request);
     }
 }

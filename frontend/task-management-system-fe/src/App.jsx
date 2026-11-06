@@ -81,6 +81,17 @@ function App() {
     window.setTimeout(() => setNotice(''), 2600)
   }
 
+  function handleUpdateUser(updatedUser) {
+    if (!updatedUser) return
+    const updated = {
+      ...authUser,
+      username: updatedUser.username ?? authUser.username,
+      email: updatedUser.email ?? authUser.email,
+    }
+    localStorage.setItem('taskflow_user', JSON.stringify(updated))
+    setAuthUser(updated)
+  }
+
   return <>
     <Routes>
       <Route path="/" element={<Navigate to={authUser ? roleHome(authUser) : '/signin'} replace />} />
@@ -89,14 +100,14 @@ function App() {
       <Route path="/user" element={<ProtectedWorkspace authUser={authUser} requiredRole="User"><WorkspaceLayout role="user" account={authUser} onLogout={handleLogout} /></ProtectedWorkspace>}>
         <Route index element={<Navigate to="tasks" replace />} />
         <Route path="tasks" element={<TasksPage role="user" userId={authUser?.id} username={authUser?.username} tasks={tasks} onChange={setTasks} onNotice={showNotice} />} />
-        <Route path="profile" element={<ProfilePage account={authUser} onNotice={showNotice} />} />
+        <Route path="profile" element={<ProfilePage account={authUser} onNotice={showNotice} onUpdateUser={handleUpdateUser} />} />
       </Route>
       <Route path="/admin" element={<ProtectedWorkspace authUser={authUser} requiredRole="Admin"><WorkspaceLayout role="admin" account={authUser} onLogout={handleLogout} /></ProtectedWorkspace>}>
         <Route index element={<Navigate to="tasks" replace />} />
         <Route path="tasks" element={<TasksPage role="admin" userId={authUser?.id} username={authUser?.username} tasks={tasks} onChange={setTasks} onNotice={showNotice} />} />
         <Route path="categories" element={<CategoriesPage categories={categories} onChange={setCategories} onNotice={showNotice} />} />
         <Route path="users" element={<UsersPage users={users} onChange={setUsers} onNotice={showNotice} />} />
-        <Route path="profile" element={<ProfilePage account={authUser} onNotice={showNotice} />} />
+        <Route path="profile" element={<ProfilePage account={authUser} onNotice={showNotice} onUpdateUser={handleUpdateUser} />} />
       </Route>
       <Route path="*" element={<Navigate to="/signin" replace />} />
     </Routes>
