@@ -89,3 +89,38 @@ export async function getById(id) {
 
     return await response.json()
 }
+
+// PUT /users/me
+export async function updateProfile(username, email) {
+    const response = await api('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+            username,
+            email,
+        }),
+    })
+
+    if (!response.ok) {
+        throw new Error(await getErrorMessage(response, 'Đã xảy ra lỗi khi cập nhật thông tin cá nhân.'))
+    }
+
+    return await response.json()
+}
+
+// PUT /users/me/change-password
+export async function changePassword(currentPassword, newPassword, confirmPassword) {
+    const response = await api('/users/me/change-password', {
+        method: 'PUT',
+        body: JSON.stringify({
+            currentPassword,
+            newPassword,
+            confirmPassword,
+        }),
+    })
+
+    if (!response.ok) {
+        throw new Error(await getErrorMessage(response, 'Đã xảy ra lỗi khi đổi mật khẩu.'))
+    }
+
+    return await response.json()
+}

@@ -127,6 +127,69 @@ namespace TaskManagementSystem.Services.Impl
             }
         }
 
+        public async Task<UserResponse> UpdateProfile(int id, UpdateProfileRequest request)
+        {
+            var user = await Context.Users.FindAsync(id);
+            if (user == null)
+            {
+                throw new NotFoundException($"User with id {id} not found.");
+            }
+
+            if (await IsUsernameExist(request.Username, id))
+            {
+                throw new ConflictException($"Username '{request.Username}' already exists.");
+            }
+            if (await IsEmailExist(request.Email, id))
+            {
+                throw new ConflictException($"Email '{request.Email}' already exists.");
+            }
+
+            user.Username = request.Username;
+            user.Email = request.Email;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await Context.SaveChangesAsync();
+                return ToResponse(user);
+            }
+            catch (Exception ex)
+            {
+                throw new BadRequestException($"Error updating profile: {ex.Message}");
+            }
+        }
+
+        public async Task ChangePassword(int id, ChangePasswordRequest request)
+        {
+            var user = await Context.Users.FindAsync(id);
+            if (user == null)
+            {
+                throw new NotFoundException($"User with id {id} not found.");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.Password))
+            {
+                throw new BadRequestException("Mật khẩu hiện tại không chính xác.");
+            }
+
+            if (BCrypt.Net.BCrypt.Verify(request.NewPassword, user.Password))
+            {
+                throw new BadRequestException("Mật khẩu mới không được trùng với mật khẩu hiện tại.");
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await Context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new BadRequestException($"Error changing password: {ex.Message}");
+            }
+        }
+
         private async Task<bool> IsUsernameExist(string username, int id = 0)
         {
             return await Context.Users
