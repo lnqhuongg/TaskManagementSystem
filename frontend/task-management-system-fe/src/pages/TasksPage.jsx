@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { create, getAll, update } from '../services/task.js'
 import { getAllActive } from '../services/category.js'
+import { getAll as getAllUsers } from '../services/user.js'
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -76,6 +77,7 @@ export default function TasksPage({ role, userId, username, tasks, onChange, onN
     const [loadError, setLoadError] = useState('')
     const [activeCategories, setActiveCategories] = useState([])
     const [categoryLoadError, setCategoryLoadError] = useState('')
+    const [availableUsers, setAvailableUsers] = useState([])
     const [saveError, setSaveError] = useState('')
     const [isSaving, setIsSaving] = useState(false)
     const pageSize = 3
@@ -133,18 +135,28 @@ export default function TasksPage({ role, userId, username, tasks, onChange, onN
         loadActiveCategories()
     }, [])
 
+    useEffect(() => {
+        if (role === 'admin') {
+            getAllUsers(1, 100).then((result) => {
+                const list = Array.isArray(result) ? result : result.items ?? result.data ?? []
+                setAvailableUsers(list.map((u) => ({
+                    id: Number(u.id ?? u.Id),
+                    name: String(u.name ?? u.username ?? u.Username ?? ''),
+                    email: String(u.email ?? u.Email ?? '')
+                })))
+            }).catch(() => {})
+        }
+    }, [role])
+
     async function submitTask(event) {
         event.preventDefault()
         const form = new FormData(event.currentTarget)
-        const taskUserId = editingTask?.userId ?? userId
+        const selectedUserId = role === 'admin' && form.get('userId')
+            ? Number(form.get('userId'))
+            : (editingTask?.userId ?? userId)
         const categoryId = Number(form.get('categoryId'))
         const category = activeCategories.find((item) => item.id === categoryId)
         const isCurrentCategory = editingTask?.id != null && categoryId === Number(editingTask.categoryId)
-
-        if (!taskUserId) {
-            setSaveError('Không xác định được tài khoản hiện tại. Vui lòng đăng nhập lại.')
-            return
-        }
 
         if (!categoryId || (!category && !isCurrentCategory)) {
             setSaveError(categoryLoadError || (activeCategories.length
@@ -161,7 +173,7 @@ export default function TasksPage({ role, userId, username, tasks, onChange, onN
             status: editingTask?.id != null ? form.get('status') : 'Todo',
             priority: form.get('priority'),
             dueDate: form.get('dueDate') || null,
-            userId: taskUserId,
+            userId: selectedUserId,
             categoryId,
         }
 
@@ -193,14 +205,14 @@ export default function TasksPage({ role, userId, username, tasks, onChange, onN
                 </div>
             </section>
             <section className="stat-grid" aria-label="Thống kê công việc">
-                <StatCard label="Tổng công việc" value={tasks.length} helper="Trong danh sách của bạn" icon="▤" tone="orange" />
-                <StatCard label="Đang thực hiện" value={activeCount} helper="Cần bạn hoàn thành" icon="◷" tone="green" />
-                <StatCard label="Đã hoàn thành" value={completedCount} helper="Bạn đang làm rất tốt" icon="✓" tone="blue" />
+                <StatCard label="Tổng công việc" value={tasks.length} helper={role === 'admin' ? 'Toàn hệ thống' : 'Trong danh sách của bạn'} icon="▤" tone="orange" />
+                <StatCard label="Đang thực hiện" value={activeCount} helper={role === 'admin' ? 'Cần thực hiện' : 'Cần bạn hoàn thành'} icon="◷" tone="green" />
+                <StatCard label="Đã hoàn thành" value={completedCount} helper={role === 'admin' ? 'Đã hoàn thành' : 'Bạn đang làm rất tốt'} icon="✓" tone="blue" />
             </section>
             <section className="task-section">
                 <div className="section-heading">
                     <div><h2>{role === 'admin' ? 'Tất cả công việc' : 'Danh sách công việc'}</h2><p>{visibleTasks.length} công việc được hiển thị</p></div>
-                    {role === 'user' && <button className="btn btn-primary button button-primary" onClick={() => setEditingTask({})}>＋ Thêm công việc</button>}
+                    <button className="btn btn-primary button button-primary" onClick={() => setEditingTask({})}>＋ Thêm công việc</button>
                 </div>
                 <div className="filter-row">
                     <div className="filter-tabs" role="tablist" aria-label="Lọc trạng thái">
@@ -249,11 +261,12 @@ export default function TasksPage({ role, userId, username, tasks, onChange, onN
                                     <th>NGÀY TẠO</th>
                                     <th>ƯU TIÊN</th>
                                     <th>TRẠNG THÁI</th>
+                                    <th>THAO TÁC</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {isLoading && <tr><td colSpan="7">Đang tải công việc...</td></tr>}
-                                {!isLoading && loadError && <tr><td colSpan="7" role="alert">{loadError}</td></tr>}
+                                {isLoading && <tr><td colSpan="8">Đang tải công việc...</td></tr>}
+                                {!isLoading && loadError && <tr><td colSpan="8" role="alert">{loadError}</td></tr>}
                                 {!isLoading && !loadError && pagedTasks.map((task) => (
                                     <tr key={task.id}>
                                         <td>{task.title}</td>
@@ -263,9 +276,12 @@ export default function TasksPage({ role, userId, username, tasks, onChange, onN
                                         <td>{formatDate(task.createdAt)}</td>
                                         <td><span className={`priority priority-${task.priority.toLowerCase()}`}><i />{priorityLabel(task.priority)}</span></td>
                                         <td><TaskStatusBadge status={task.status} /></td>
+                                        <td>
+                                            <button className="btn icon-button" title="Chỉnh sửa công việc" aria-label="Chỉnh sửa công việc" onClick={() => setEditingTask(task)}>✎</button>
+                                        </td>
                                     </tr>
                                 ))}
-                                {!isLoading && !loadError && !pagedTasks.length && <tr><td colSpan="7">Hiện chưa có công việc nào.</td></tr>}
+                                {!isLoading && !loadError && !pagedTasks.length && <tr><td colSpan="8">Hiện chưa có công việc nào.</td></tr>}
                             </tbody>
                         </table>
                     </div>
@@ -294,12 +310,25 @@ export default function TasksPage({ role, userId, username, tasks, onChange, onN
                     </div>
                 </div>
             </section>
-            {editingTask && <TaskDialog task={editingTask} categories={dialogCategories} categoryLoadError={categoryLoadError} error={saveError} isSaving={isSaving} onClose={() => {
-                if (!isSaving) {
-                    setEditingTask(null)
-                    setSaveError('')
-                }
-            }} onSubmit={submitTask} />}
+            {editingTask && (
+                <TaskDialog
+                    task={editingTask}
+                    categories={dialogCategories}
+                    categoryLoadError={categoryLoadError}
+                    error={saveError}
+                    isSaving={isSaving}
+                    role={role}
+                    users={availableUsers}
+                    currentUserId={userId}
+                    onClose={() => {
+                        if (!isSaving) {
+                            setEditingTask(null)
+                            setSaveError('')
+                        }
+                    }}
+                    onSubmit={submitTask}
+                />
+            )}
         </>
     )
 }
@@ -347,8 +376,9 @@ function formatDate(value) {
     return value ? new Date(value).toLocaleDateString('vi-VN') : 'Chưa có'
 }
 
-function TaskDialog({ task, categories, categoryLoadError, error, isSaving, onClose, onSubmit }) {
+function TaskDialog({ task, categories, categoryLoadError, error, isSaving, role, users, currentUserId, onClose, onSubmit }) {
     const isEditing = task.id != null
+    const defaultUserId = task.userId ?? currentUserId
 
     return (
         <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
@@ -359,6 +389,18 @@ function TaskDialog({ task, categories, categoryLoadError, error, isSaving, onCl
                 </div>
                 <form onSubmit={onSubmit} className="dialog-form">
                     <label>Tên công việc<input name="title" required defaultValue={task.title} placeholder="Ví dụ: Hoàn thành báo cáo" autoFocus /></label>
+                    {role === 'admin' && users && users.length > 0 && (
+                        <label>
+                            Người phụ trách (Giao việc)
+                            <select name="userId" defaultValue={defaultUserId}>
+                                {users.map((u) => (
+                                    <option key={u.id} value={u.id}>
+                                        {u.name || u.email} ({u.email})
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    )}
                     <div className="form-grid">
                         <label>Danh mục<select name="categoryId" required defaultValue={task.categoryId ?? categories.find((category) => category.name === task.category)?.id ?? ''}><option value="" disabled>{categoryLoadError ? 'Không tải được danh mục' : categories.length ? 'Chọn danh mục' : 'Chưa có danh mục hoạt động'}</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
                         <label>Ngày đến hạn<input type="date" name="dueDate" defaultValue={task.dueDate ?? ''} /></label>

@@ -20,9 +20,8 @@ namespace TaskManagementSystem.DTOs.TaskDTO
 
         public DateTime? DueDate { get; set; }
 
-        [Required(ErrorMessage = "UserId is required")]
         [Range(1, int.MaxValue, ErrorMessage = "UserId must be a positive integer")]
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
 
         [Required(ErrorMessage = "CategoryId is required")]
         [Range(1, int.MaxValue, ErrorMessage = "CategoryId must be a positive integer")]

@@ -22,13 +22,18 @@ namespace TaskManagementSystem.Services.Impl
         /// Sử dụng .Include(t => t.User).Include(t => t.Category) để EF Core tạo câu lệnh SQL JOIN.
         /// Toàn bộ dữ liệu Task, User, Category được nạp trong 1 query duy nhất!
         /// </summary>
-        public async Task<PagedResult<TaskResponse>> GetAll(int page, int pageSize, string keyword)
+        public async Task<PagedResult<TaskResponse>> GetAll(int page, int pageSize, string keyword, int currentUserId, UserRole currentUserRole)
         {   
             var query = Context.TaskItems
                 .AsNoTracking() 
                 .Include(t => t.User)
                 .Include(t => t.Category)
                 .AsQueryable();
+
+            if (currentUserRole != UserRole.Admin)
+            {
+                query = query.Where(t => t.UserId == currentUserId);
+            }
 
             if (!string.IsNullOrEmpty(keyword))
             {
@@ -61,12 +66,17 @@ namespace TaskManagementSystem.Services.Impl
         /// => Tổng cộng: 1 (count) + 1 (tasks) + N (user) + N (category) = 2 + 2N queries xuống database!
         /// Ví dụ pageSize = 5 => phát sinh 12 queries; pageSize = 10 => phát sinh 22 queries.
         /// </summary>
-        public async Task<PagedResult<TaskResponse>> GetAllNPlusOne(int page, int pageSize, string keyword)
+        public async Task<PagedResult<TaskResponse>> GetAllNPlusOne(int page, int pageSize, string keyword, int currentUserId, UserRole currentUserRole)
         {
             // 1. Chỉ query danh sách TaskItems, KHÔNG dùng Include
             var query = Context.TaskItems
                 .AsNoTracking()
                 .AsQueryable();
+
+            if (currentUserRole != UserRole.Admin)
+            {
+                query = query.Where(t => t.UserId == currentUserId);
+            }
 
             if (!string.IsNullOrEmpty(keyword))
             {
@@ -121,7 +131,7 @@ namespace TaskManagementSystem.Services.Impl
             };
         }
 
-        public async Task<TaskResponse> GetById(int id)
+        public async Task<TaskResponse> GetById(int id, int currentUserId, UserRole currentUserRole)
         {
             var task = await Context.TaskItems
                 .AsNoTracking()
@@ -134,15 +144,24 @@ namespace TaskManagementSystem.Services.Impl
                 throw new NotFoundException($"Task with id {id} not found.");
             }
 
+            if (currentUserRole != UserRole.Admin && task.UserId != currentUserId)
+            {
+                throw new ForbiddenException("You do not have permission to access this task.");
+            }
+
             return ToResponse(task);
         }
 
-        public async Task<TaskResponse> Create(CreateTaskRequest request)
+        public async Task<TaskResponse> Create(CreateTaskRequest request, int currentUserId, UserRole currentUserRole)
         {
-            var user = await Context.Users.FindAsync(request.UserId);
+            int targetUserId = (currentUserRole == UserRole.Admin && request.UserId.HasValue)
+                ? request.UserId.Value
+                : currentUserId;
+
+            var user = await Context.Users.FindAsync(targetUserId);
             if (user == null)
             {
-                throw new NotFoundException($"User with id {request.UserId} not found.");
+                throw new NotFoundException($"User with id {targetUserId} not found.");
             }
 
             var category = await Context.Categories.FindAsync(request.CategoryId);
@@ -158,7 +177,7 @@ namespace TaskManagementSystem.Services.Impl
                 Status = request.Status,
                 Priority = request.Priority,
                 DueDate = ToUtc(request.DueDate),
-                UserId = request.UserId,
+                UserId = targetUserId,
                 CategoryId = request.CategoryId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
@@ -179,7 +198,7 @@ namespace TaskManagementSystem.Services.Impl
             }
         }
 
-        public async Task<TaskResponse> Update(int id, UpdateTaskRequest request)
+        public async Task<TaskResponse> Update(int id, UpdateTaskRequest request, int currentUserId, UserRole currentUserRole)
         {
             var task = await Context.TaskItems.FindAsync(id);
 
@@ -188,14 +207,20 @@ namespace TaskManagementSystem.Services.Impl
                 throw new NotFoundException($"Task with id {id} not found.");
             }
 
-            if (task.UserId != request.UserId)
+            if (currentUserRole != UserRole.Admin && task.UserId != currentUserId)
             {
-                var user = await Context.Users.FindAsync(request.UserId);
+                throw new ForbiddenException("You do not have permission to modify this task.");
+            }
+
+            // Chỉ Admin mới có quyền gán/chuyển task cho user khác
+            if (currentUserRole == UserRole.Admin && request.UserId.HasValue && task.UserId != request.UserId.Value)
+            {
+                var user = await Context.Users.FindAsync(request.UserId.Value);
                 if (user == null)
                 {
-                    throw new NotFoundException($"User with id {request.UserId} not found.");
+                    throw new NotFoundException($"User with id {request.UserId.Value} not found.");
                 }
-                task.UserId = request.UserId;
+                task.UserId = request.UserId.Value;
             }
 
             if (task.CategoryId != request.CategoryId)
